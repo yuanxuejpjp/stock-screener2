@@ -30,19 +30,51 @@ st.set_page_config(
 DEFAULT_WATCHLIST = ['NVDA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'AAPL']
 
 # ==================== Session State ====================
-# 使用更健壮的方式初始化 session_state
+# 文件存储路径
+WATCHLIST_FILE = 'watchlist.txt'
+
+def load_watchlist_from_file():
+    """从文件加载监控列表"""
+    try:
+        if os.path.exists(WATCHLIST_FILE):
+            with open(WATCHLIST_FILE, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+                if content:
+                    return content.split(',')
+        return DEFAULT_WATCHLIST.copy()
+    except:
+        return DEFAULT_WATCHLIST.copy()
+
+def save_watchlist_to_file(watchlist):
+    """保存监控列表到文件"""
+    try:
+        with open(WATCHLIST_FILE, 'w', encoding='utf-8') as f:
+            f.write(','.join(watchlist))
+    except Exception as e:
+        st.warning(f"保存失败: {e}")
+
+# 不在启动时自动设置默认值，让用户自己初始化
 if 'watchlist' not in st.session_state:
-    st.session_state.watchlist = DEFAULT_WATCHLIST.copy()
+    # 从文件加载，如果文件不存在则用空列表
+    st.session_state.watchlist = load_watchlist_from_file()
 elif not isinstance(st.session_state.watchlist, list):
     st.session_state.watchlist = list(st.session_state.watchlist)
 
+def save_watchlist(watchlist):
+    """保存监控列表到 session_state 和文件"""
+    st.session_state.watchlist = watchlist.copy()
+    save_watchlist_to_file(watchlist)
+
+def init_default_watchlist():
+    """初始化默认监控列表（只调用一次）"""
+    if 'watchlist_initialized' not in st.session_state:
+        st.session_state.watchlist_initialized = True
+        if not st.session_state.watchlist:  # 只在列表为空时才设置默认值
+            st.session_state.watchlist = DEFAULT_WATCHLIST.copy()
+            save_watchlist_to_file(DEFAULT_WATCHLIST.copy())
+
 if 'last_refresh' not in st.session_state:
     st.session_state.last_refresh = None
-
-# 确保 session_state 在每次运行时保持
-def save_watchlist(watchlist):
-    """保存监控列表到 session_state"""
-    st.session_state.watchlist = watchlist.copy()
 
 # ==================== 宏观指标获取 ====================
 
@@ -428,6 +460,15 @@ def show_stock_details(ticker, data, screening):
 def render_sidebar():
     """渲染侧边栏"""
     st.sidebar.title("⚙️ 设置")
+
+    # 初始化默认监控列表（如果是第一次使用）
+    if not st.session_state.watchlist:
+        st.sidebar.info("监控列表为空，点击下方按钮初始化默认列表")
+        if st.sidebar.button("🔄 初始化默认列表"):
+            init_default_watchlist()
+            st.rerun()
+
+    st.sidebar.markdown("---")
 
     # 添加新股票
     st.sidebar.subheader("添加股票")
