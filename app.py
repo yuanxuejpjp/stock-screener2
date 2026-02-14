@@ -606,63 +606,229 @@ def render_sidebar():
 
 def main():
     """主函数"""
+
+    # 自定义 CSS - 移动端优化 + 美化
+    st.markdown(
+        """
+        <style>
+        /* 全局字体和背景 */
+        .main {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            /* 表格水平滚动 */
+            .main .block-container {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            /* 减小表格字体 */
+            .dataframe {
+                font-size: 0.7rem !important;
+            }
+            .dataframe td, .dataframe th {
+                padding: 0.4rem 0.3rem !important;
+            }
+            /* 减小标题字体 */
+            h1 {
+                font-size: 1.5rem !important;
+            }
+            h2 {
+                font-size: 1.2rem !important;
+            }
+            h3 {
+                font-size: 1rem !important;
+            }
+            /* 卡片内边距 */
+            .css-1d391kg {
+                padding: 0.5rem !important;
+            }
+            /* 指标卡片 */
+            .css-1vbd788 {
+                padding: 0.75rem 0.5rem !important;
+            }
+            /* Metric 标签字体 */
+            .metric-label {
+                font-size: 0.8rem !important;
+            }
+            .metric-value {
+                font-size: 1.2rem !important;
+            }
+        }
+        @media (max-width: 480px) {
+            /* 超小屏幕优化 */
+            .dataframe {
+                font-size: 0.65rem !important;
+            }
+            .dataframe td, .dataframe th {
+                padding: 0.3rem 0.2rem !important;
+            }
+        }
+
+        /* 美化指标卡片 */
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        /* 美化表格 */
+        .stDataFrame {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stDataFrame table {
+            width: 100%;
+        }
+        .stDataFrame th {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+        }
+        .stDataFrame td {
+            text-align: center;
+        }
+
+        /* 标题渐变 */
+        .title-gradient {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* 按钮美化 */
+        .stButton > button {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .stButton > button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 输入框美化 */
+        .stTextInput > div > div > input {
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+        .stTextInput > div > div > input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Tab 美化 */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 8px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            border-radius: 8px 8px 0 0;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+
+        /* 侧边栏美化 */
+        .css-1d391kg {
+            background: linear-gradient(180deg, #f8f9ff 0%, #ffffff 100%);
+        }
+
+        /* Expander 美化 */
+        .streamlit-expanderHeader {
+            background: linear-gradient(90deg, #f0f4ff 0%, #ffffff 100%);
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
     # 渲染侧边栏
     render_sidebar()
 
     # 页面标题
-    st.title("🤖 大科技股筛选器")
-    st.markdown("基于彼得·林奇风格优化的7步筛选法，专门针对大科技AI公司")
+    st.markdown('<h1 class="title-gradient">🤖 大科技股筛选器</h1>', unsafe_allow_html=True)
+    st.markdown("**基于彼得·林奇风格优化的7步筛选法，专门针对大科技AI公司**")
 
-    # 名言
-    st.markdown("---")
+    # 名言卡片
     st.markdown(
         """
-        <div style="text-align: center; padding: 1rem; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); border-radius: 10px; margin-bottom: 1.5rem;">
-            <p style="color: white; font-size: 1.2rem; font-weight: bold; margin: 0;">
+        <div style="
+            text-align: center;
+            padding: 1.5rem 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            margin: 1.5rem 0;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+        ">
+            <p style="
+                color: white;
+                font-size: clamp(1rem, 3vw, 1.3rem);
+                font-weight: 600;
+                margin: 0;
+                letter-spacing: 0.5px;
+            ">
                 💎 投资是个等待的游戏 💎
+            </p>
+            <p style="
+                color: rgba(255,255,255,0.8);
+                font-size: clamp(0.75rem, 2vw, 0.9rem);
+                margin: 0.5rem 0 0 0;
+            ">
+                — 彼得·林奇
             </p>
         </div>
         """,
         unsafe_allow_html=True
     )
-    st.markdown("---")
 
     # ==================== 第一部分：宏观指标区 ====================
     st.markdown("---")
-    st.subheader("📊 宏观指标")
+    st.markdown("### 📊 市场概览")
 
-    col1, col2, col3 = st.columns(3)
+    # 使用容器包裹宏观指标，添加卡片样式
+    with st.container():
+        col1, col2, col3 = st.columns(3)
 
-    with col1:
-        fg_score = get_fear_and_greed_index()
-        if fg_score is not None:
-            fg_text, fg_emoji = interpret_fear_greed(fg_score)
-            st.metric(
-                label=f"CNN 恐惧贪婪指数 {fg_emoji}",
-                value=f"{fg_score}",
-                delta=fg_text
-            )
-            st.caption(f"<25 极度恐惧 | 25-45 恐惧 | 45-55 中性 | 55-75 贪婪 | >75 极度贪婪")
+        with col1:
+            fg_score = get_fear_and_greed_index()
+            if fg_score is not None:
+                fg_text, fg_emoji = interpret_fear_greed(fg_score)
+                st.metric(
+                    label=f"CNN 恐惧贪婪指数 {fg_emoji}",
+                    value=f"{fg_score}",
+                    delta=fg_text
+                )
+                st.caption(f"<25 极度恐惧 | 25-45 恐惧 | 45-55 中性 | 55-75 贪婪 | >75 极度贪婪")
 
-    with col2:
-        sp500_value, sp500_growth = get_sp500_index()
-        if sp500_value is not None:
-            delta_str = f"{sp500_growth:+.2f}%" if sp500_growth is not None else None
-            st.metric(
-                label="S&P 500 指数",
-                value=f"{sp500_value:.2f}",
-                delta=delta_str
-            )
+        with col2:
+            sp500_value, sp500_growth = get_sp500_index()
+            if sp500_value is not None:
+                delta_str = f"{sp500_growth:+.2f}%" if sp500_growth is not None else None
+                st.metric(
+                    label="S&P 500 指数",
+                    value=f"{sp500_value:.2f}",
+                    delta=delta_str
+                )
 
-    with col3:
-        nasdaq_value, nasdaq_growth = get_nasdaq_index()
-        if nasdaq_value is not None:
-            delta_str = f"{nasdaq_growth:+.2f}%" if nasdaq_growth is not None else None
-            st.metric(
-                label="纳斯达克指数 (NASDAQ)",
-                value=f"{nasdaq_value:.2f}",
-                delta=delta_str
-            )
+        with col3:
+            nasdaq_value, nasdaq_growth = get_nasdaq_index()
+            if nasdaq_value is not None:
+                delta_str = f"{nasdaq_growth:+.2f}%" if nasdaq_growth is not None else None
+                st.metric(
+                    label="纳斯达克指数 (NASDAQ)",
+                    value=f"{nasdaq_value:.2f}",
+                    delta=delta_str
+                )
 
     # ==================== 第二部分：标签页 ====================
     st.markdown("---")
@@ -809,8 +975,25 @@ def main():
 
     # 页脚
     st.markdown("---")
-    st.markdown("数据来源: Yahoo Finance (yfinance) | CNN Fear & Greed Index")
-    st.caption(f"最后更新: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    st.markdown(
+        """
+        <div style="
+            text-align: center;
+            padding: 1.5rem;
+            background: linear-gradient(90deg, #f8f9ff 0%, #fff5f5 100%);
+            border-radius: 12px;
+            margin-top: 2rem;
+        ">
+            <p style="color: #666; font-size: 0.9rem; margin: 0;">
+                📊 数据来源: Yahoo Finance (yfinance) | CNN Fear & Greed Index
+            </p>
+            <p style="color: #999; font-size: 0.8rem; margin: 0.5rem 0 0 0;">
+                最后更新: {}
+            </p>
+        </div>
+        """.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+        unsafe_allow_html=True
+    )
 
 if __name__ == "__main__":
     main()
