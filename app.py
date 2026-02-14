@@ -30,8 +30,11 @@ st.set_page_config(
 DEFAULT_WATCHLIST = ['NVDA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'AAPL']
 
 # ==================== Session State ====================
+# 使用更健壮的方式初始化 session_state
 if 'watchlist' not in st.session_state:
-    st.session_state.watchlist = DEFAULT_WATCHLIST
+    st.session_state.watchlist = DEFAULT_WATCHLIST.copy()
+elif not isinstance(st.session_state.watchlist, list):
+    st.session_state.watchlist = list(st.session_state.watchlist)
 
 if 'last_refresh' not in st.session_state:
     st.session_state.last_refresh = None
