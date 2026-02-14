@@ -185,15 +185,21 @@ def get_stock_data(ticker_symbol):
         if inst_holding is not None:
             inst_holding = inst_holding * 100
 
-        # 自己计算 PEG = Forward PE / EPS增长率
+        # 计算 PEG = Forward PE / EPS增长率(百分比)
         forward_pe = info.get('forwardPE')
-        eps_growth = info.get('earningsQuarterlyGrowth') or info.get('earningsGrowth')
-        peg_ratio = None
-        if forward_pe is not None and eps_growth is not None and eps_growth > 0:
-            peg_ratio = forward_pe / (eps_growth * 100)  # EPS增长率是小数，需要转百分比
-        # 如果自己计算失败，尝试使用 Yahoo 的 pegRatio
-        if peg_ratio is None:
-            peg_ratio = info.get('pegRatio')
+        # Yahoo 的 earningsQuarterlyGrowth/earningsGrowth 可能是小数或百分比格式
+        eps_growth_raw = info.get('earningsQuarterlyGrowth') or info.get('earningsGrowth')
+        peg_ratio = info.get('pegRatio')  # 先用 Yahoo 的值作为默认
+
+        # 如果 Yahoo 有 PEG，直接使用；否则自己计算
+        if peg_ratio is None and forward_pe is not None and eps_growth_raw is not None:
+            # 判断 eps_growth 是小数(<1)还是百分比(>=1)，统一转换为百分比
+            if abs(eps_growth_raw) < 1:
+                eps_growth_pct = eps_growth_raw * 100  # 小数转百分比，如 0.15 -> 15
+            else:
+                eps_growth_pct = eps_growth_raw  # 已经是百分比
+            if eps_growth_pct > 0:
+                peg_ratio = forward_pe / eps_growth_pct
 
         return {
             'ticker': ticker_symbol,
