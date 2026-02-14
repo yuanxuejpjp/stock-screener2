@@ -759,6 +759,13 @@ def main():
     st.markdown('<h1 class="title-gradient">🤖 大科技股筛选器</h1>', unsafe_allow_html=True)
     st.markdown("**基于彼得·林奇风格优化的7步筛选法，专门针对大科技AI公司**")
 
+    # 当前日期
+    today = datetime.now().strftime('%Y年%m月%d日 %A')
+    st.markdown(
+        f'<p style="text-align: center; color: #999; font-size: 0.9rem;">📅 {today}</p>',
+        unsafe_allow_html=True
+    )
+
     # 名言卡片
     st.markdown(
         """
