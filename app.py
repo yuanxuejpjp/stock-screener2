@@ -39,6 +39,11 @@ elif not isinstance(st.session_state.watchlist, list):
 if 'last_refresh' not in st.session_state:
     st.session_state.last_refresh = None
 
+# 确保 session_state 在每次运行时保持
+def save_watchlist(watchlist):
+    """保存监控列表到 session_state"""
+    st.session_state.watchlist = watchlist.copy()
+
 # ==================== 宏观指标获取 ====================
 
 def get_fear_and_greed_index():
@@ -434,9 +439,11 @@ def render_sidebar():
     if st.sidebar.button("➕ 添加到监控列表"):
         if new_ticker:
             if new_ticker not in st.session_state.watchlist:
-                st.session_state.watchlist.append(new_ticker)
+                # 创建新列表并保存
+                new_list = st.session_state.watchlist.copy()
+                new_list.append(new_ticker)
+                save_watchlist(new_list)
                 st.sidebar.success(f"已添加 {new_ticker}")
-                st.rerun()
             else:
                 st.sidebar.warning(f"{new_ticker} 已在列表中")
 
@@ -454,10 +461,11 @@ def render_sidebar():
         )
 
         if stocks_to_remove and st.sidebar.button("🗑️ 移除选中"):
-            for stock in stocks_to_remove:
-                st.session_state.watchlist.remove(stock)
-            st.sidebar.success("已移除")
-            st.rerun()
+            if stocks_to_remove:
+                # 创建新列表并保存
+                new_list = [s for s in st.session_state.watchlist if s not in stocks_to_remove]
+                save_watchlist(new_list)
+                st.sidebar.success("已移除")
 
     st.sidebar.markdown("---")
 
