@@ -191,16 +191,19 @@ def get_stock_data(ticker_symbol):
         peg_ratio = None
         if forward_pe is not None and eps_growth is not None and eps_growth > 0:
             peg_ratio = forward_pe / (eps_growth * 100)  # EPS增长率是小数，需要转百分比
+        # 如果自己计算失败，尝试使用 Yahoo 的 pegRatio
+        if peg_ratio is None:
+            peg_ratio = info.get('pegRatio')
 
         return {
             'ticker': ticker_symbol,
             'current_price': info.get('currentPrice') or info.get('regularMarketPrice'),
             'forward_pe': forward_pe,
-            'peg_ratio': peg_ratio,  # 使用自己计算的值
+            'peg_ratio': peg_ratio,
             'debt_to_equity': info.get('debtToEquity'),
             'total_revenue': info.get('totalRevenue'),
             'revenue_growth': info.get('revenueGrowth'),
-            'eps_growth': info.get('earningsQuarterlyGrowth') or info.get('earningsGrowth'),
+            'eps_growth': eps_growth,
             'free_cash_flow': free_cash_flow,
             'fcf_yield': fcf_yield,
             'net_cash': net_cash,
