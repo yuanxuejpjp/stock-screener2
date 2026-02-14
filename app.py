@@ -185,11 +185,18 @@ def get_stock_data(ticker_symbol):
         if inst_holding is not None:
             inst_holding = inst_holding * 100
 
+        # 自己计算 PEG = Forward PE / EPS增长率
+        forward_pe = info.get('forwardPE')
+        eps_growth = info.get('earningsQuarterlyGrowth') or info.get('earningsGrowth')
+        peg_ratio = None
+        if forward_pe is not None and eps_growth is not None and eps_growth > 0:
+            peg_ratio = forward_pe / (eps_growth * 100)  # EPS增长率是小数，需要转百分比
+
         return {
             'ticker': ticker_symbol,
             'current_price': info.get('currentPrice') or info.get('regularMarketPrice'),
-            'forward_pe': info.get('forwardPE'),
-            'peg_ratio': info.get('pegRatio'),
+            'forward_pe': forward_pe,
+            'peg_ratio': peg_ratio,  # 使用自己计算的值
             'debt_to_equity': info.get('debtToEquity'),
             'total_revenue': info.get('totalRevenue'),
             'revenue_growth': info.get('revenueGrowth'),
@@ -665,7 +672,7 @@ def main():
 
         #### 7步筛选法详解 (彼得·林奇风格)
 
-        1. **Forward PEG ≤ 1.2**: PEG = PE ÷ 增长率，综合考虑估值和成长性，PEG < 1 表示被低估 (数据不可用时跳过)
+        1. **Forward PEG ≤ 1.2**: PEG = Forward PE ÷ EPS增长率，综合考虑估值和成长性。PEG < 1 表示被低估，PEG = 1 合理估值，PEG > 1 被高估 (数据不可用时跳过)
         2. **债务权益比 < 50%**: 财务健康，债务负担较轻
         3. **TTM营收 ≥ $500亿**: 大型成熟公司，业务稳定
         4. **Forward PE ≤ 25 且营收增长 ≥ 15%**: 估值合理且业务在扩张
