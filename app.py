@@ -154,6 +154,46 @@ def interpret_fear_greed(score):
     else:
         return "极度贪婪", "🟢"
 
+# ==================== RSI 计算 ====================
+
+def calculate_rsi(ticker_symbol, period=14):
+    """计算 RSI 指标"""
+    try:
+        ticker = yf.Ticker(ticker_symbol)
+        # 获取足够的历史数据（至少 period + 1 天）
+        hist = ticker.history(period="2mo")
+        if hist.empty or len(hist) < period + 1:
+            return None
+
+        closes = hist['Close'].values
+
+        # 计算价格变化
+        deltas = closes[1:] - closes[:-1]
+
+        # 分离上涨和下跌
+        gains = deltas.copy()
+        losses = deltas.copy()
+        gains[gains < 0] = 0
+        losses[losses > 0] = 0
+        losses = -losses
+
+        # 计算平均涨跌幅（使用 Wilder 平滑方法）
+        avg_gain = gains[:period].mean()
+        avg_loss = losses[:period].mean()
+
+        for i in range(period, len(gains)):
+            avg_gain = (avg_gain * (period - 1) + gains[i]) / period
+            avg_loss = (avg_loss * (period - 1) + losses[i]) / period
+
+        if avg_loss == 0:
+            return 100  # 没有下跌，RSI 为 100
+
+        rs = avg_gain / avg_loss
+        rsi = 100 - (100 / (1 + rs))
+        return round(rsi, 1)
+    except Exception as e:
+        return None
+
 # ==================== 数据获取 ====================
 
 def get_stock_data(ticker_symbol):
@@ -201,6 +241,9 @@ def get_stock_data(ticker_symbol):
             if eps_growth_pct > 0:
                 peg_ratio = forward_pe / eps_growth_pct
 
+        # 获取 RSI 值
+        rsi = calculate_rsi(ticker_symbol)
+
         return {
             'ticker': ticker_symbol,
             'current_price': info.get('currentPrice') or info.get('regularMarketPrice'),
@@ -214,6 +257,7 @@ def get_stock_data(ticker_symbol):
             'fcf_yield': fcf_yield,
             'net_cash': net_cash,
             'beta': info.get('beta'),  # Beta值
+            'rsi': rsi,  # RSI指标
             'roe': roe,
             'institutional_holdings': inst_holding,
             'recommendation': info.get('averageRecommendation'),
@@ -410,6 +454,7 @@ def create_watchlist_dataframe(stock_data):
             'FCF Yield': format_percent(data.get('fcf_yield')),
             '净现金': format_net_cash(data.get('net_cash')),
             'Beta': format_value(data.get('beta'), decimals=2),
+            'RSI': format_value(data.get('rsi'), decimals=1),
             '通过步数': f"{screening['passed_count']}/7",
             '加分项': f"+{screening['bonus_points']}",
             '状态': screening['status'],
@@ -426,6 +471,8 @@ def create_watchlist_dataframe(stock_data):
             '_fail_eps_growth': not steps['step5'],  # EPS增长在 step5
             '_fail_fcf_yield': not steps['step6'],  # FCF Yield在 step6
             '_fail_net_cash': not steps['step7'],  # 净现金在 step7
+            # RSI 颜色标记
+            '_rsi_value': data.get('rsi'),  # 保存原始 RSI 值用于颜色判断
         }
         rows.append(row)
 
@@ -620,6 +667,23 @@ def main():
                         'background-color: #FFFF99' if v == "观察中" else ''
                         for v in s]
 
+            # 为 RSI 列添加颜色（<30 绿色超卖，>70 红色超买）
+            def highlight_rsi_col(s, orig_df):
+                """高亮 RSI 列"""
+                styles = []
+                for idx, val in enumerate(s):
+                    orig_row = orig_df.iloc[idx]
+                    rsi_val = orig_row.get('_rsi_value')
+                    if rsi_val is None:
+                        styles.append('')
+                    elif rsi_val < 30:
+                        styles.append('background-color: #90EE90')  # 绿色 - 超卖
+                    elif rsi_val > 70:
+                        styles.append('background-color: #FFCCCC')  # 红色 - 超买
+                    else:
+                        styles.append('')
+                return styles
+
             # 为失败列添加红色 - 闭包捕获 original_df
             def make_highlight_func(col_name, orig_df):
                 """创建高亮函数工厂"""
@@ -652,6 +716,7 @@ def main():
             # 应用样式
             styled_df = display_df.style
             styled_df.apply(highlight_status_col, subset=['状态'])
+            styled_df.apply(highlight_rsi_col, orig_df=df, subset=['RSI'])
             styled_df.apply(make_highlight_func('PEG', df), subset=['PEG'])
             styled_df.apply(make_highlight_func('Forward PE', df), subset=['Forward PE'])
             styled_df.apply(make_highlight_func('债务权益比', df), subset=['债务权益比'])
