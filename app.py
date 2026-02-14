@@ -209,7 +209,7 @@ def get_stock_data(ticker_symbol):
             'debt_to_equity': info.get('debtToEquity'),
             'total_revenue': info.get('totalRevenue'),
             'revenue_growth': info.get('revenueGrowth'),
-            'eps_growth': eps_growth,
+            'eps_growth': eps_growth_raw,
             'free_cash_flow': free_cash_flow,
             'fcf_yield': fcf_yield,
             'net_cash': net_cash,
