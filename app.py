@@ -394,6 +394,7 @@ def create_watchlist_dataframe(stock_data):
             'Ticker': ticker,
             '价格': format_price(data.get('current_price')),
             'Forward PE': format_value(data.get('forward_pe')),
+            'PEG': format_value(data.get('peg_ratio'), decimals=2),
             '债务权益比': format_value(data.get('debt_to_equity'), decimals=1),
             'TTM营收': format_revenue(data.get('total_revenue')),
             'EPS增长': format_percent((data.get('eps_growth') or 0) * 100),
@@ -407,6 +408,7 @@ def create_watchlist_dataframe(stock_data):
             '_screening': screening,  # 保存完整筛选结果
             '_data': data,  # 保存完整数据
             # 保存每列是否通过的条件（用于红色高亮）
+            '_fail_peg': not steps['step1'],  # PEG 在 step1
             '_fail_forward_pe': not steps['step4'],  # Forward PE 在 step4
             '_fail_debt_equity': not steps['step2'],  # 债务权益比在 step2
             '_fail_revenue': not steps['step3'],  # TTM营收在 step3
@@ -615,7 +617,9 @@ def main():
                         orig_row = orig_df.iloc[idx]
                         should_red = False
 
-                        if col_name == 'Forward PE' and orig_row.get('_fail_forward_pe', False):
+                        if col_name == 'PEG' and orig_row.get('_fail_peg', False):
+                            should_red = True
+                        elif col_name == 'Forward PE' and orig_row.get('_fail_forward_pe', False):
                             should_red = True
                         elif col_name == '债务权益比' and orig_row.get('_fail_debt_equity', False):
                             should_red = True
@@ -635,6 +639,7 @@ def main():
             # 应用样式
             styled_df = display_df.style
             styled_df.apply(highlight_status_col, subset=['状态'])
+            styled_df.apply(make_highlight_func('PEG', df), subset=['PEG'])
             styled_df.apply(make_highlight_func('Forward PE', df), subset=['Forward PE'])
             styled_df.apply(make_highlight_func('债务权益比', df), subset=['债务权益比'])
             styled_df.apply(make_highlight_func('TTM营收', df), subset=['TTM营收'])
