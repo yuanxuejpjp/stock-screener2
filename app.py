@@ -414,6 +414,8 @@ def create_watchlist_dataframe(stock_data):
             '加分项': f"+{screening['bonus_points']}",
             '状态': screening['status'],
             '_color': screening['color'],  # 内部字段，用于颜色编码
+            '_passed_count': screening['passed_count'],  # 用于排序
+            '_bonus_points': screening['bonus_points'],  # 用于排序
             '_screening': screening,  # 保存完整筛选结果
             '_data': data,  # 保存完整数据
             # 保存每列是否通过的条件（用于红色高亮）
@@ -428,6 +430,8 @@ def create_watchlist_dataframe(stock_data):
         rows.append(row)
 
     df = pd.DataFrame(rows)
+    # 按照推荐程度排序：通过步数多的在前，通过步数相同时加分项多的在前
+    df = df.sort_values(by=['_passed_count', '_bonus_points'], ascending=False)
     return df
 
 
