@@ -29,6 +29,9 @@ st.set_page_config(
 # ==================== 默认配置 ====================
 DEFAULT_WATCHLIST = ['NVDA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'AAPL']
 
+# ==================== RSI 缓存 ====================
+RSI_CACHE = {}  # 缓存 RSI 值，避免重复计算
+
 # ==================== Session State ====================
 # 文件存储路径
 WATCHLIST_FILE = 'watchlist.txt'
@@ -158,10 +161,14 @@ def interpret_fear_greed(score):
 
 def calculate_rsi(ticker_symbol, period=14):
     """计算 RSI 指标"""
+    # 检查缓存
+    if ticker_symbol in RSI_CACHE:
+        return RSI_CACHE[ticker_symbol]
+
     try:
         ticker = yf.Ticker(ticker_symbol)
         # 获取足够的历史数据（至少 period + 1 天）
-        hist = ticker.history(period="2mo")
+        hist = ticker.history(period="1mo")
         if hist.empty or len(hist) < period + 1:
             return None
 
@@ -186,12 +193,17 @@ def calculate_rsi(ticker_symbol, period=14):
             avg_loss = (avg_loss * (period - 1) + losses[i]) / period
 
         if avg_loss == 0:
-            return 100  # 没有下跌，RSI 为 100
+            rsi = 100  # 没有下跌，RSI 为 100
+        else:
+            rs = avg_gain / avg_loss
+            rsi = 100 - (100 / (1 + rs))
 
-        rs = avg_gain / avg_loss
-        rsi = 100 - (100 / (1 + rs))
-        return round(rsi, 1)
+        rsi_value = round(rsi, 1)
+        # 缓存结果
+        RSI_CACHE[ticker_symbol] = rsi_value
+        return rsi_value
     except Exception as e:
+        # 静默失败，返回 None
         return None
 
 # ==================== 数据获取 ====================
