@@ -21,7 +21,7 @@ AI_REVENUE_PCT = {
 
 # ==================== 页面配置 ====================
 st.set_page_config(
-    page_title="大科技AI股票筛选器",
+    page_title="大科技股筛选器",
     page_icon="📈",
     layout="wide",
 )
@@ -610,8 +610,22 @@ def main():
     render_sidebar()
 
     # 页面标题
-    st.title("🤖 大科技AI股票筛选器 & 监控列表")
+    st.title("🤖 大科技股筛选器")
     st.markdown("基于彼得·林奇风格优化的7步筛选法，专门针对大科技AI公司")
+
+    # 名言
+    st.markdown("---")
+    st.markdown(
+        """
+        <div style="text-align: center; padding: 1rem; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); border-radius: 10px; margin-bottom: 1.5rem;">
+            <p style="color: white; font-size: 1.2rem; font-weight: bold; margin: 0;">
+                💎 投资是个等待的游戏 💎
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    st.markdown("---")
 
     # ==================== 第一部分：宏观指标区 ====================
     st.markdown("---")
