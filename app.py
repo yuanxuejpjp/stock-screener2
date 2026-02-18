@@ -547,10 +547,10 @@ def show_stock_details(ticker, data, screening):
                 ("债务权益比 < 50%", 'debt_to_equity', format_value(data.get('debt_to_equity'), decimals=1) + '%'),
                 ("TTM营收 ≥ 500亿美元", 'total_revenue', format_revenue(data.get('total_revenue'))),
                 ("Forward PE ≤ 25 且营收增长 ≥ 15%", 'forward_pe',
-                 f"PE:{format_value(data.get('forward_pe'))} 增长:{format_percent(data.get('revenue_growth')*100)}"),
+                 f"PE:{format_value(data.get('forward_pe'))} 增长:{format_percent((data.get('revenue_growth') or 0) * 100)}"),
                 ("EPS增长率 >= 20% (越高越好)", 'eps_growth', format_percent((data.get('eps_growth') or 0) * 100)),
                 ("FCF为正且 Yield ≥ 2.5%", 'fcf_yield', format_percent(data.get('fcf_yield'))),
-                ("净现金 > 0", 'net_cash', f"${data.get('net_cash', 0)/1e9:.1f}B"),
+                ("净现金 > 0", 'net_cash', f"${(data.get('net_cash') or 0)/1e9:.1f}B"),
             ]
 
             for i, (name, key, val) in enumerate(step_names, 1):
