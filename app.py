@@ -213,6 +213,39 @@ def calculate_rsi(ticker_symbol, period=14):
 
 # ==================== 数据获取 ====================
 
+def get_qqq_holdings():
+    """获取 QQQ (Nasdaq-100) 的成分股列表"""
+    try:
+        qqq = yf.Ticker('QQQ')
+        holdings = qqq.info.get('holdings')  # 尝试获取 holdings 数据
+
+        # 如果 yfinance 无法直接获取 holdings，使用已知的 Nasdaq-100 列表
+        # 这里使用常见的主要 Nasdaq-100 股票
+        qqq_stocks = [
+            # 科技巨头
+            'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'META', 'NVDA', 'TSLA', 'AVGO',
+            'CSCO', 'ADBE', 'COST', 'PEP', 'CMCSA', 'NFLX', 'AMD', 'INTC', 'INTU',
+            'QCOM', 'TXN', 'HON', 'SBUX', 'AMGN', 'BKNG', 'ISRG', 'GILD', 'ADP',
+            'VRTX', 'REGN', 'MDLZ', 'CSX', 'ATVI', 'MU', 'LRCX', 'ADI', 'MRNA',
+            'KLAC', 'MELI', 'CHTR', 'MAR', 'ILMN', 'SNPS', 'CDNS', 'WDAY', 'ASML',
+            'ORLY', 'DXCM', 'AZN', 'SGEN', 'MRVL', 'PYPL', 'ADSK', 'EBAY', 'ZM',
+            'CTAS', 'CSGP', 'IDXX', 'FAST', 'BIIB', 'ROST', 'XEL', 'NTAP', 'KDP',
+            'EXC', 'WBA', 'VRSK', 'WBD', 'FOX', 'FOXA', 'LULU', 'ALGN', 'SWKS',
+            'MNST', 'MDA', 'PCAR', 'INCY', 'CERN', 'IDBY', 'ZS', 'DOCU', 'OKTA',
+            'ANSS', 'MTCH', 'RCL', 'BKNG', 'EBAY', 'SHOP', 'SPOT', 'COIN', 'PLTR',
+            'UPST', 'SQ', 'TWLO', 'SNOW', 'DASH', 'RBLX', 'UBER', 'LYFT', 'AFRM',
+            'HOOD', 'ETSY', 'ZG', 'NTES', 'BIDU', 'JD', 'PDD', 'NIO', 'LI', 'XPEV',
+            'DIDI', 'TME', 'BABA', 'BZUN', 'WIX', 'BIGC', 'RVBD', 'CNXC', 'GT',
+            'JPM', 'BAC', 'WMT', 'DIS', 'NKE', 'V', 'MA', 'PYPL', 'CRM', 'ABNB',
+            'TSM', 'ARM', 'SPLK', 'TEAM', 'CRWD', 'OKTA', 'NET', 'DDOG', 'FSLY',
+            'ESTC', 'VRNS', 'SUMO', 'NEW', 'QUOT', 'LSPD', 'ETSY', 'U', 'DKNG',
+            'GDYN', 'YETI', 'RETA', 'INMD', 'AH', 'Etsy', 'ZM', 'PTON', 'PINS',
+        ]
+        return qqq_stocks
+    except Exception as e:
+        st.warning(f"获取 QQQ 成分股失败: {e}")
+        return []
+
 def get_stock_data(ticker_symbol):
     """获取股票数据"""
     try:
@@ -848,7 +881,7 @@ def main():
     # 获取所有股票数据（在标签页外获取一次，避免重复请求）
     stock_data = fetch_all_stocks(st.session_state.watchlist)
 
-    tab1, tab2 = st.tabs(["📈 监控列表", "📋 筛选指标说明"])
+    tab1, tab2, tab3 = st.tabs(["📈 监控列表", "🔍 QQQ 筛选", "📋 筛选指标说明"])
 
     # 标签页1：监控列表
     with tab1:
@@ -939,8 +972,162 @@ def main():
                 screening = run_screening(data)
                 show_stock_details(ticker, data, screening)
 
-    # 标签页2：筛选指标说明
+    # 标签页2：QQQ 筛选
     with tab2:
+        st.subheader("🔍 QQQ (Nasdaq-100) 7步筛选法")
+        st.markdown("从 Nasdaq-100 成分股中筛选出通过至少 5 步的优质股票")
+
+        # 添加刷新按钮
+        if st.button("🔄 刷新 QQQ 筛选数据"):
+            st.rerun()
+
+        # 获取 QQQ 成分股
+        with st.spinner("正在获取 QQQ 成分股并筛选..."):
+            qqq_stocks = get_qqq_holdings()
+            qqq_stock_data = fetch_all_stocks(qqq_stocks)
+
+        if not qqq_stock_data:
+            st.info("QQQ 数据获取失败，请稍后重试")
+        else:
+            # 筛选出通过至少 5 步的股票
+            qualified_stocks = {}
+            for ticker, data in qqq_stock_data.items():
+                screening = run_screening(data)
+                if screening['passed_count'] >= 5:
+                    data['_screening'] = screening
+                    qualified_stocks[ticker] = data
+
+            # 显示统计信息
+            st.markdown("---")
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("QQQ 成分股总数", len(qqq_stocks))
+            with col2:
+                st.metric("成功获取数据", len(qqq_stock_data))
+            with col3:
+                st.metric("通过≥5步", len(qualified_stocks))
+            with col4:
+                strong_buy = sum(1 for d in qualified_stocks.values() if d['_screening']['passed_count'] == 7)
+                st.metric("强烈推荐(7步)", strong_buy)
+            st.markdown("---")
+
+            if not qualified_stocks:
+                st.warning("没有股票通过至少 5 步筛选")
+            else:
+                # 创建表格（复用现有函数，但需要处理带有 _screening 的数据）
+                rows = []
+
+                for ticker, data in qualified_stocks.items():
+                    screening = data['_screening']
+                    steps = screening['steps']
+
+                    row = {
+                        'Ticker': ticker,
+                        '价格': format_price(data.get('current_price')),
+                        'Forward PE': format_value(data.get('forward_pe')),
+                        'PEG': format_value(data.get('peg_ratio'), decimals=2),
+                        '债务权益比': format_value(data.get('debt_to_equity'), decimals=1),
+                        'TTM营收': format_revenue(data.get('total_revenue')),
+                        'EPS增长': format_percent((data.get('eps_growth') or 0) * 100),
+                        'FCF Yield': format_percent(data.get('fcf_yield')),
+                        '净现金': format_net_cash(data.get('net_cash')),
+                        'Beta': format_value(data.get('beta'), decimals=2),
+                        'RSI': format_value(data.get('rsi'), decimals=1),
+                        '通过步数': f"{screening['passed_count']}/7",
+                        '加分项': f"+{screening['bonus_points']}",
+                        '状态': screening['status'],
+                        '_color': screening['color'],
+                        '_passed_count': screening['passed_count'],
+                        '_bonus_points': screening['bonus_points'],
+                        '_screening': screening,
+                        '_data': data,
+                        '_fail_peg': not steps['step1'],
+                        '_fail_forward_pe': not steps['step4'],
+                        '_fail_debt_equity': not steps['step2'],
+                        '_fail_revenue': not steps['step3'],
+                        '_fail_eps_growth': not steps['step5'],
+                        '_fail_fcf_yield': not steps['step6'],
+                        '_fail_net_cash': not steps['step7'],
+                        '_rsi_value': data.get('rsi'),
+                    }
+                    rows.append(row)
+
+                df_qqq = pd.DataFrame(rows)
+                df_qqq = df_qqq.sort_values(by=['_passed_count', '_bonus_points'], ascending=False)
+
+                # 删除内部列用于显示
+                display_columns = [col for col in df_qqq.columns if not col.startswith('_')]
+                display_df = df_qqq[display_columns].copy()
+
+                # 应用样式（复用现有函数）
+                def highlight_status_col(s):
+                    return ['background-color: #90EE90' if v == "强烈推荐" else
+                            'background-color: #FFFF99' if v == "观察中" else ''
+                            for v in s]
+
+                def highlight_rsi_col(s, orig_df):
+                    styles = []
+                    for idx, val in enumerate(s):
+                        orig_row = orig_df.iloc[idx]
+                        rsi_val = orig_row.get('_rsi_value')
+                        if rsi_val is None:
+                            styles.append('')
+                        elif rsi_val < 30:
+                            styles.append('background-color: #90EE90')
+                        elif rsi_val > 70:
+                            styles.append('background-color: #FFCCCC')
+                        else:
+                            styles.append('')
+                    return styles
+
+                def make_highlight_func(col_name, orig_df):
+                    def highlight_func(s):
+                        styles = []
+                        for idx, val in enumerate(s):
+                            orig_row = orig_df.iloc[idx]
+                            should_red = False
+                            if col_name == 'PEG' and orig_row.get('_fail_peg', False):
+                                should_red = True
+                            elif col_name == 'Forward PE' and orig_row.get('_fail_forward_pe', False):
+                                should_red = True
+                            elif col_name == '债务权益比' and orig_row.get('_fail_debt_equity', False):
+                                should_red = True
+                            elif col_name == 'TTM营收' and orig_row.get('_fail_revenue', False):
+                                should_red = True
+                            elif col_name == 'EPS增长' and orig_row.get('_fail_eps_growth', False):
+                                should_red = True
+                            elif col_name == 'FCF Yield' and orig_row.get('_fail_fcf_yield', False):
+                                should_red = True
+                            elif col_name == '净现金' and orig_row.get('_fail_net_cash', False):
+                                should_red = True
+                            styles.append('background-color: #FFCCCC' if should_red else '')
+                        return styles
+                    return highlight_func
+
+                # 应用样式
+                styled_df = display_df.style
+                styled_df.apply(highlight_status_col, subset=['状态'])
+                styled_df.apply(highlight_rsi_col, orig_df=df_qqq, subset=['RSI'])
+                styled_df.apply(make_highlight_func('PEG', df_qqq), subset=['PEG'])
+                styled_df.apply(make_highlight_func('Forward PE', df_qqq), subset=['Forward PE'])
+                styled_df.apply(make_highlight_func('债务权益比', df_qqq), subset=['债务权益比'])
+                styled_df.apply(make_highlight_func('TTM营收', df_qqq), subset=['TTM营收'])
+                styled_df.apply(make_highlight_func('EPS增长', df_qqq), subset=['EPS增长'])
+                styled_df.apply(make_highlight_func('FCF Yield', df_qqq), subset=['FCF Yield'])
+                styled_df.apply(make_highlight_func('净现金', df_qqq), subset=['净现金'])
+
+                st.dataframe(styled_df, use_container_width=True, hide_index=True)
+
+                # 显示详细信息
+                st.markdown("---")
+                st.subheader("📊 详细筛选结果")
+
+                for ticker, data in qualified_stocks.items():
+                    screening = data['_screening']
+                    show_stock_details(ticker, data, screening)
+
+    # 标签页3：筛选指标说明
+    with tab3:
         st.markdown("### 📋 筛选指标说明")
 
         st.markdown("""
@@ -1009,5 +1196,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
