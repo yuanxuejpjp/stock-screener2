@@ -27,7 +27,7 @@ st.set_page_config(
 )
 
 # ==================== 默认配置 ====================
-DEFAULT_WATCHLIST = ['NVDA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'AAPL']
+DEFAULT_WATCHLIST = ['NVDA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'AAPL', 'TSM', 'TSLA', 'CRM', 'VST', 'CST']
 
 # ==================== RSI 缓存 ====================
 RSI_CACHE = {}  # 缓存 RSI 值，避免重复计算
@@ -1004,3 +1004,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
