@@ -16,7 +16,12 @@ AI_REVENUE_PCT = {
     'GOOGL': 30.0,
     'AMZN': 25.0,
     'META': 20.0,
-    'AAPL': 15.0
+    'AAPL': 15.0,
+    'TSM': 45.0,   # 台积电 - AI芯片制造
+    'TSLA': 12.0,  # 特斯拉 - FSD自动驾驶
+    'CRM': 10.0,   # Salesforce - Einstein AI
+    'VST': 5.0,    # Veristar
+    'CST': 5.0,    # 其他
 }
 
 # ==================== 页面配置 ====================
@@ -1004,4 +1009,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
