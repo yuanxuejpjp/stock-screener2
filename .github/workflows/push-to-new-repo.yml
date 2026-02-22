@@ -8,15 +8,37 @@ on:
 jobs:
   push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Push to market_report_generator
+      - name: Setup Git
         run: |
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
-          git remote add target https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/yuanxuejpjp/market_report_generator.git
-          git subtree split --prefix=market_report_generator -b temp-branch
-          git push target temp-branch:main --force
+      
+      - name: Push to market_report_generator
+        env:
+          TARGET_TOKEN: ${{ secrets.MARKET_REPORT_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          # 创建临时分支包含 market_report_generator 目录的内容
+          git checkout -b temp-export-branch
+          git filter-branch --force --prune-empty --subdirectory-filter market_report_generator temp-export-branch
+          
+          # 添加目标远程
+          git remote add target https://x-access-token:${TARGET_TOKEN}@github.com/yuanxuejpjp/market_report_generator.git
+          
+          # 强制推送到目标仓库的 main 分支
+          git push target temp-export-branch:main --force || echo "Push failed, trying alternative..."
+          
+          # 如果失败，尝试直接推送
+          if [ $? -ne 0 ]; then
+            echo "Retrying with original history..."
+            git checkout main
+            git subtree split --prefix=market_report_generator -b split-branch || git filter-branch --force --prune-empty --subdirectory-filter market_report_generator
+            git push target split-branch:main --force
+          fi
